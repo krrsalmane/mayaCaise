@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Card, Col, Form, Row, Table } from 'react-bootstrap';
+import { Alert, Button, Card, Form, Modal } from 'react-bootstrap';
 import Layout from '../components/Layout';
-import LoadingSpinner from '../components/LoadingSpinner';
-import PaginationControl from '../components/PaginationControl';
 import ClientFormModal from '../components/ClientFormModal';
 import { categoryApi, clientApi, productApi, purchaseApi } from '../api/services';
 import { DISCOUNT_OPTIONS, computeSaleTotal } from '../utils/discount';
@@ -11,22 +9,17 @@ const staffClients = (clients) => clients.filter((c) => c.clientType === 'STAFF'
 const externeClients = (clients) => clients.filter((c) => c.clientType === 'EXTERNE');
 
 export default function Purchases() {
-  const [purchases, setPurchases] = useState([]);
   const [clients, setClients] = useState([]);
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
-  const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [showClientModal, setShowClientModal] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [showClientModal, setShowClientModal] = useState(false);
-  const [selectedClientType, setSelectedClientType] = useState('');
-
   const [form, setForm] = useState({
+    clientType: '',
     clientId: '',
     categoryId: '',
     productId: '',
@@ -44,21 +37,6 @@ export default function Purchases() {
     ? computeSaleTotal(selectedProduct.price, form.discountPercent).toFixed(2)
     : '0.00';
 
-  const loadPurchases = () => {
-    setLoading(true);
-    const request = startDate && endDate
-      ? purchaseApi.getByDateRange(startDate, endDate, page, 10)
-      : purchaseApi.getAll(page, 10);
-
-    request
-      .then((res) => {
-        setPurchases(res.data.content);
-        setTotalPages(res.data.totalPages);
-      })
-      .catch((err) => setError(err.message || 'Failed to load purchases'))
-      .finally(() => setLoading(false));
-  };
-
   const reloadClients = () =>
     clientApi.getAll(0, 500).then((res) => setClients(res.data.content));
 
@@ -70,20 +48,28 @@ export default function Purchases() {
     ]);
   }, []);
 
-  useEffect(() => { loadPurchases(); }, [page, startDate, endDate]);
-
-  const validate = () => {
+  const validateCurrentStep = () => {
     const errors = {};
-    if (!form.clientId) errors.clientId = 'Client is required';
-    if (!form.categoryId) errors.categoryId = 'Category is required';
-    if (!form.productId) errors.productId = 'Product is required';
+    if (currentStep === 1 && !form.clientType) errors.clientType = 'Client type is required';
+    if (currentStep === 2 && !form.clientId) errors.clientId = 'Client name is required';
+    if (currentStep === 3 && !form.categoryId) errors.categoryId = 'Category is required';
+    if (currentStep === 4 && !form.productId) errors.productId = 'Product is required';
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validate()) return;
+  const handleBack = () => {
+    if (currentStep > 1) setCurrentStep(currentStep - 1);
+  };
+
+  const handleSelect = (stepUpdates) => {
+    setForm({ ...form, ...stepUpdates });
+    setFormErrors({});
+    if (currentStep < 5) setCurrentStep(currentStep + 1);
+  };
+
+  const handleSubmit = async () => {
+    if (!validateCurrentStep()) return;
     setError('');
     setSuccess('');
     try {
@@ -93,8 +79,12 @@ export default function Purchases() {
         discountPercent: Number(form.discountPercent),
       });
       setSuccess('Sale recorded successfully!');
-      setForm({ clientId: form.clientId, categoryId: '', productId: '', discountPercent: 0 });
-      loadPurchases();
+      setForm({ clientType: '', clientId: '', categoryId: '', productId: '', discountPercent: 0 });
+      setCurrentStep(1);
+      setTimeout(() => {
+        setShowModal(false);
+        setSuccess('');
+      }, 1500);
       productApi.getAll(0, 500).then((res) => setProducts(res.data.content));
     } catch (err) {
       setError(err.message || 'Failed to create purchase');
@@ -103,207 +93,184 @@ export default function Purchases() {
 
   const handleClientCreated = (client) => {
     setClients((prev) => [...prev, client]);
-    setSelectedClientType(client.clientType);
-    setForm((f) => ({ ...f, clientId: String(client.id) }));
+    setForm((f) => ({ ...f, clientType: client.clientType, clientId: String(client.id) }));
   };
 
-  const clearFilters = () => {
-    setStartDate('');
-    setEndDate('');
-    setPage(0);
+  const openModal = () => {
+    setForm({ clientType: '', clientId: '', categoryId: '', productId: '', discountPercent: 0 });
+    setCurrentStep(1);
+    setError('');
+    setSuccess('');
+    setShowModal(true);
   };
 
   return (
     <Layout title="Sales / Purchases">
-      <Row className="g-4">
-        <Col lg={4}>
-          <Card>
-            <Card.Header>New Sale</Card.Header>
-            <Card.Body>
-              <Form onSubmit={handleSubmit}>
-                <Form.Group className="mb-3">
-                  <div className="d-flex justify-content-between align-items-center mb-1">
-                    <Form.Label className="mb-0">Client Type</Form.Label>
-                    <Button
-                      size="sm"
-                      variant="outline-primary"
-                      type="button"
-                      onClick={() => setShowClientModal(true)}
-                    >
-                      + New client
-                    </Button>
-                  </div>
-                  <Form.Select
-                    value={selectedClientType}
-                    onChange={(e) => {
-                      setSelectedClientType(e.target.value);
-                      setForm({ ...form, clientId: '' });
-                    }}
-                    className="mb-3"
-                  >
-                    <option value="">Select Type</option>
-                    <option value="STAFF">Staff</option>
-                    <option value="EXTERNE">Externe</option>
-                  </Form.Select>
+      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
+        <Button 
+          variant="success" 
+          size="lg" 
+          onClick={openModal}
+          style={{ padding: '20px 40px', fontSize: '1.5rem' }}
+        >
+          Record a Sell
+        </Button>
+      </div>
 
-                  <Form.Label className="mb-0">Client Name *</Form.Label>
-                  <Form.Select
-                    value={form.clientId}
-                    onChange={(e) => setForm({ ...form, clientId: e.target.value })}
-                    isInvalid={!!formErrors.clientId}
-                    disabled={!selectedClientType}
-                  >
-                    <option value="">Select client</option>
-                    {selectedClientType === 'STAFF' && staffClients(clients).map((c) => (
-                      <option key={c.id} value={c.id}>{c.fullName}</option>
-                    ))}
-                    {selectedClientType === 'EXTERNE' && externeClients(clients).map((c) => (
-                      <option key={c.id} value={c.id}>{c.fullName}</option>
-                    ))}
-                  </Form.Select>
-                  <Form.Control.Feedback type="invalid">{formErrors.clientId}</Form.Control.Feedback>
-                </Form.Group>
+      <Modal show={showModal} onHide={() => setShowModal(false)} centered size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>New Sale - Step {currentStep}/5</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {success && <Alert variant="success">{success}</Alert>}
+          {error && <Alert variant="danger">{error}</Alert>}
 
-                <Form.Group className="mb-3">
-                  <Form.Label>Category *</Form.Label>
-                  <Form.Select
-                    value={form.categoryId}
-                    onChange={(e) =>
-                      setForm({ ...form, categoryId: e.target.value, productId: '' })
-                    }
-                    isInvalid={!!formErrors.categoryId}
-                  >
-                    <option value="">Choose category first</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
-                    ))}
-                  </Form.Select>
-                  <Form.Control.Feedback type="invalid">{formErrors.categoryId}</Form.Control.Feedback>
-                </Form.Group>
-
-                <Form.Group className="mb-3">
-                  <Form.Label>Product *</Form.Label>
-                  <Form.Select
-                    value={form.productId}
-                    onChange={(e) => setForm({ ...form, productId: e.target.value })}
-                    disabled={!form.categoryId}
-                    isInvalid={!!formErrors.productId}
-                  >
-                    <option value="">
-                      {form.categoryId ? 'Select product' : 'Select category first'}
-                    </option>
-                    {categoryProducts.map((p) => (
-                      <option key={p.id} value={p.id} disabled={p.stock < 1}>
-                        {p.name} — {Number(p.price).toFixed(2)} MAD
-                        {p.stock < 1 ? ' (out of stock)' : ` (stock: ${p.stock})`}
-                      </option>
-                    ))}
-                  </Form.Select>
-                  <Form.Control.Feedback type="invalid">{formErrors.productId}</Form.Control.Feedback>
-                </Form.Group>
-
-                <Form.Group className="mb-3">
-                  <Form.Label>Discount</Form.Label>
-                  <Form.Select
-                    value={form.discountPercent}
-                    onChange={(e) =>
-                      setForm({ ...form, discountPercent: Number(e.target.value) })
-                    }
-                  >
-                    {DISCOUNT_OPTIONS.map((d) => (
-                      <option key={d} value={d}>
-                        {d === 0 ? 'No discount (0%)' : `${d}%`}
-                      </option>
-                    ))}
-                  </Form.Select>
-                  {selectedProduct && form.discountPercent > 0 && (
-                    <Form.Text className="text-muted">
-                      Original: {Number(selectedProduct.price).toFixed(2)} MAD
-                    </Form.Text>
-                  )}
-                </Form.Group>
-
-                <div className="total-box mb-3">
-                  <span>Total Price</span>
-                  <strong>{computedTotal} MAD</strong>
-                </div>
-
-                <Button type="submit" variant="success" className="w-100" disabled={!selectedProduct || selectedProduct.stock < 1}>
-                  Record Sale
+          {currentStep === 1 && (
+            <Form.Group>
+              <Form.Label>Client Type</Form.Label>
+              <div className="d-flex gap-3">
+                <Button
+                  variant={form.clientType === 'STAFF' ? 'primary' : 'outline-primary'}
+                  className="flex-fill py-3"
+                  onClick={() => handleSelect({ clientType: 'STAFF', clientId: '' })}
+                >
+                  Staff
                 </Button>
-              </Form>
-            </Card.Body>
-          </Card>
-        </Col>
+                <Button
+                  variant={form.clientType === 'EXTERNE' ? 'primary' : 'outline-primary'}
+                  className="flex-fill py-3"
+                  onClick={() => handleSelect({ clientType: 'EXTERNE', clientId: '' })}
+                >
+                  Externe
+                </Button>
+              </div>
+              {formErrors.clientType && <div className="text-danger mt-2">{formErrors.clientType}</div>}
+            </Form.Group>
+          )}
 
-        <Col lg={8}>
-          {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
-          {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
+          {currentStep === 2 && (
+            <Form.Group>
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <Form.Label>Client Name</Form.Label>
+                <Button
+                  size="sm"
+                  variant="outline-primary"
+                  type="button"
+                  onClick={() => setShowClientModal(true)}
+                >
+                  + New client
+                </Button>
+              </div>
+              <div className="d-flex flex-column gap-2" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                {form.clientType === 'STAFF' && staffClients(clients).map((c) => (
+                  <Button
+                    key={c.id}
+                    variant={form.clientId === String(c.id) ? 'primary' : 'outline-secondary'}
+                    className="text-start py-2"
+                    onClick={() => handleSelect({ clientId: String(c.id) })}
+                  >
+                    {c.fullName}
+                  </Button>
+                ))}
+                {form.clientType === 'EXTERNE' && externeClients(clients).map((c) => (
+                  <Button
+                    key={c.id}
+                    variant={form.clientId === String(c.id) ? 'primary' : 'outline-secondary'}
+                    className="text-start py-2"
+                    onClick={() => handleSelect({ clientId: String(c.id) })}
+                  >
+                    {c.fullName}
+                  </Button>
+                ))}
+              </div>
+              {formErrors.clientId && <div className="text-danger mt-2">{formErrors.clientId}</div>}
+            </Form.Group>
+          )}
 
-          <Card className="mb-3">
-            <Card.Body>
-              <Row className="g-2 align-items-end">
-                <Col md={4}>
-                  <Form.Label>Start Date</Form.Label>
-                  <Form.Control type="date" value={startDate} onChange={(e) => { setStartDate(e.target.value); setPage(0); }} />
-                </Col>
-                <Col md={4}>
-                  <Form.Label>End Date</Form.Label>
-                  <Form.Control type="date" value={endDate} onChange={(e) => { setEndDate(e.target.value); setPage(0); }} />
-                </Col>
-                <Col md={4}>
-                  <Button variant="outline-secondary" className="w-100" onClick={clearFilters}>Clear dates</Button>
-                </Col>
-              </Row>
-            </Card.Body>
-          </Card>
+          {currentStep === 3 && (
+            <Form.Group>
+              <Form.Label>Category</Form.Label>
+              <div className="d-flex flex-column gap-2" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                {categories.map((cat) => (
+                  <Button
+                    key={cat.id}
+                    variant={form.categoryId === String(cat.id) ? 'primary' : 'outline-secondary'}
+                    className="text-start py-2"
+                    onClick={() => handleSelect({ categoryId: String(cat.id), productId: '' })}
+                  >
+                    {cat.name}
+                  </Button>
+                ))}
+              </div>
+              {formErrors.categoryId && <div className="text-danger mt-2">{formErrors.categoryId}</div>}
+            </Form.Group>
+          )}
 
-          <Card>
-            <Card.Header className="d-flex justify-content-between align-items-center">
-              <span>Purchase History</span>
-            </Card.Header>
-            <Card.Body className="p-0">
-              {loading ? (
-                <LoadingSpinner />
-              ) : (
-                <>
-                  <Table responsive hover className="mb-0">
-                    <thead>
-                      <tr>
-                        <th>Date</th>
-                        <th>Client</th>
-                        <th>Product</th>
-                        <th>Discount</th>
-                        <th>Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {purchases.map((p) => (
-                        <tr key={p.id} className={p.paid ? 'purchase-row-paid' : ''}>
-                          <td>{new Date(p.purchaseDate).toLocaleDateString()}</td>
-                          <td>
-                            {p.clientName}
-                            <small className="d-block text-muted">
-                              {p.clientType === 'STAFF' ? 'Staff' : 'Externe'}
-                            </small>
-                          </td>
-                          <td>{p.productName}</td>
-                          <td>{p.discountPercent > 0 ? `-${p.discountPercent}%` : '—'}</td>
-                          <td>{Number(p.totalPrice).toFixed(2)} MAD</td>
-                        </tr>
-                      ))}
-                      {purchases.length === 0 && (
-                        <tr><td colSpan={5} className="text-center text-muted py-4">No purchases found</td></tr>
-                      )}
-                    </tbody>
-                  </Table>
-                  <PaginationControl page={page} totalPages={totalPages} onPageChange={setPage} />
-                </>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+          {currentStep === 4 && (
+            <Form.Group>
+              <Form.Label>Product</Form.Label>
+              <div className="d-flex flex-column gap-2" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                {categoryProducts.map((p) => (
+                  <Button
+                    key={p.id}
+                    variant={form.productId === String(p.id) ? 'primary' : 'outline-secondary'}
+                    className="text-start py-2"
+                    disabled={p.stock < 1}
+                    onClick={() => handleSelect({ productId: String(p.id) })}
+                  >
+                    {p.name} — {Number(p.price).toFixed(2)} MAD
+                    {p.stock < 1 ? ' (out of stock)' : ` (stock: ${p.stock})`}
+                  </Button>
+                ))}
+              </div>
+              {formErrors.productId && <div className="text-danger mt-2">{formErrors.productId}</div>}
+            </Form.Group>
+          )}
+
+          {currentStep === 5 && (
+            <>
+              <Form.Group className="mb-3">
+                <Form.Label>Discount</Form.Label>
+                <div className="d-flex flex-wrap gap-2">
+                  {DISCOUNT_OPTIONS.map((d) => (
+                    <Button
+                      key={d}
+                      variant={form.discountPercent === d ? 'primary' : 'outline-secondary'}
+                      onClick={() => setForm({ ...form, discountPercent: d })}
+                    >
+                      {d === 0 ? 'No discount (0%)' : `${d}%`}
+                    </Button>
+                  ))}
+                </div>
+                {selectedProduct && form.discountPercent > 0 && (
+                  <Form.Text className="text-muted d-block mt-2">
+                    Original: {Number(selectedProduct.price).toFixed(2)} MAD
+                  </Form.Text>
+                )}
+              </Form.Group>
+
+              <div className="total-box mb-3 p-3 bg-light rounded">
+                <span className="d-block mb-1">Total Price</span>
+                <strong style={{ fontSize: '1.5rem' }}>{computedTotal} MAD</strong>
+              </div>
+            </>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleBack} disabled={currentStep === 1}>
+            Back
+          </Button>
+          {currentStep === 5 && (
+            <Button 
+              variant="success" 
+              onClick={handleSubmit}
+              disabled={!selectedProduct || selectedProduct.stock < 1}
+            >
+              Record Sale
+            </Button>
+          )}
+        </Modal.Footer>
+      </Modal>
 
       <ClientFormModal
         show={showClientModal}

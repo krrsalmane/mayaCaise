@@ -205,3 +205,230 @@ body {
     flex-direction: column;
   }
 }
+
+/* ─── Login Page ─────────────────────────────────────────── */
+.login-page {
+  min-height: 100vh;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+.login-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(20, 8, 2, 0.78) 0%, rgba(60, 30, 10, 0.65) 100%);
+  backdrop-filter: blur(2px);
+}
+
+.login-container {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 440px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.75rem;
+}
+
+.login-brand {
+  text-align: center;
+  color: #fff;
+}
+
+.login-logo {
+  font-size: 3.5rem;
+  line-height: 1;
+  margin-bottom: 0.4rem;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
+}
+
+.login-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -0.5px;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.4);
+}
+
+.login-subtitle {
+  font-size: 0.95rem;
+  opacity: 0.75;
+  margin: 0.25rem 0 0;
+  letter-spacing: 0.5px;
+}
+
+.login-card {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.97);
+  border-radius: 20px;
+  padding: 2.25rem 2rem 1.75rem;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35), 0 4px 16px rgba(0,0,0,0.2);
+  backdrop-filter: blur(10px);
+}
+
+.login-card-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2c1810;
+  margin: 0 0 0.25rem;
+}
+
+.login-card-sub {
+  font-size: 0.88rem;
+  color: #888;
+  margin: 0 0 1.5rem;
+}
+
+.login-error {
+  background: #fff3f3;
+  color: #c0392b;
+  border: 1px solid #fbc4c4;
+  border-radius: 10px;
+  padding: 0.65rem 1rem;
+  font-size: 0.88rem;
+  margin-bottom: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.login-field label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #444;
+}
+
+.login-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.login-input-icon {
+  position: absolute;
+  left: 0.85rem;
+  font-size: 1rem;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.login-input-wrap input {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 2.6rem;
+  border: 1.5px solid #e0d8d2;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  background: #faf8f6;
+  color: #333;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.login-input-wrap input:focus {
+  border-color: #6f4e37;
+  box-shadow: 0 0 0 3px rgba(111, 78, 55, 0.15);
+  background: #fff;
+}
+
+.login-btn {
+  margin-top: 0.5rem;
+  width: 100%;
+  padding: 0.85rem;
+  background: linear-gradient(135deg, #6f4e37, #bc6c25);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: opacity 0.2s, transform 0.15s;
+  box-shadow: 0 4px 16px rgba(111, 78, 55, 0.35);
+}
+
+.login-btn:hover:not(:disabled) {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.login-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.login-btn-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.login-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.login-footer-hint {
+  text-align: center;
+  font-size: 0.78rem;
+  color: #aaa;
+  margin: 1rem 0 0;
+}
+
+/* ─── Logout Button ──────────────────────────────────────── */
+.sidebar-logout {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.75rem;
+  color: rgba(255, 255, 255, 0.6);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  width: 100%;
+  text-align: left;
+  transition: all 0.2s;
+  margin-top: auto;
+}
+
+.sidebar-logout:hover {
+  background: rgba(220, 50, 50, 0.2);
+  color: #ff8080;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 1rem 0.75rem 0.5rem;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}

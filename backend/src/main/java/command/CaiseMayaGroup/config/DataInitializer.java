@@ -5,6 +5,7 @@ import command.CaiseMayaGroup.repository.CategoryRepository;
 import command.CaiseMayaGroup.repository.ClientRepository;
 import command.CaiseMayaGroup.repository.ProductRepository;
 import command.CaiseMayaGroup.repository.PurchaseRepository;
+import command.CaiseMayaGroup.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -20,9 +21,19 @@ public class DataInitializer implements CommandLineRunner {
     private final ProductRepository productRepository;
     private final ClientRepository clientRepository;
     private final PurchaseRepository purchaseRepository;
+    private final UserRepository userRepository;
 
     @Override
     public void run(String... args) {
+        // Always ensure admin user exists
+        if (userRepository.findByUsername("admin").isEmpty()) {
+            userRepository.save(User.builder()
+                    .username("admin")
+                    .password("admin")
+                    .role("ADMIN")
+                    .build());
+        }
+
         if (categoryRepository.count() > 0) {
             return;
         }

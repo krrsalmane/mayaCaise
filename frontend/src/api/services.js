@@ -41,3 +41,7 @@ export const purchaseApi = {
 export const dashboardApi = {
   getStats: () => api.get('/dashboard/stats'),
 };
+
+export const authApi = {
+  login: (data) => api.post('/auth/login', data),
+};

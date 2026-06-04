@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { Nav } from 'react-bootstrap';
 
 const navItems = [
@@ -10,8 +10,16 @@ const navItems = [
 ];
 
 export default function Sidebar() {
+  const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem('cm_user') || '{}');
+
+  const handleLogout = () => {
+    localStorage.removeItem('cm_user');
+    navigate('/login');
+  };
+
   return (
-    <aside className="sidebar">
+    <aside className="sidebar" style={{ display: 'flex', flexDirection: 'column' }}>
       <div className="sidebar-brand">
         <span className="brand-icon">☕</span>
         <div>
@@ -32,6 +40,17 @@ export default function Sidebar() {
           </NavLink>
         ))}
       </Nav>
+
+      <div className="sidebar-footer">
+        {user.username && (
+          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.75rem', padding: '0 1rem', marginBottom: '0.5rem' }}>
+            Logged in as <strong style={{ color: 'rgba(255,255,255,0.7)' }}>{user.username}</strong>
+          </p>
+        )}
+        <button className="sidebar-logout" onClick={handleLogout}>
+          <span>🚪</span> Logout
+        </button>
+      </div>
     </aside>
   );
 }
