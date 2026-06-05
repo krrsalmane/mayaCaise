@@ -62,7 +62,6 @@ public class DataInitializer implements CommandLineRunner {
                 .name("Espresso")
                 .description("Strong Italian coffee")
                 .price(new BigDecimal("2.50"))
-                .stock(100)
                 .category(hotDrinks)
                 .build());
 
@@ -70,7 +69,6 @@ public class DataInitializer implements CommandLineRunner {
                 .name("Cappuccino")
                 .description("Espresso with steamed milk foam")
                 .price(new BigDecimal("3.50"))
-                .stock(80)
                 .category(hotDrinks)
                 .build());
 
@@ -78,7 +76,6 @@ public class DataInitializer implements CommandLineRunner {
                 .name("Latte")
                 .description("Espresso with steamed milk")
                 .price(new BigDecimal("3.80"))
-                .stock(75)
                 .category(hotDrinks)
                 .build());
 
@@ -86,7 +83,6 @@ public class DataInitializer implements CommandLineRunner {
                 .name("Coca Cola")
                 .description("Classic cola drink")
                 .price(new BigDecimal("2.00"))
-                .stock(120)
                 .category(coldDrinks)
                 .build());
 
@@ -94,7 +90,6 @@ public class DataInitializer implements CommandLineRunner {
                 .name("Orange Juice")
                 .description("Fresh squeezed orange juice")
                 .price(new BigDecimal("3.00"))
-                .stock(60)
                 .category(coldDrinks)
                 .build());
 
@@ -102,7 +97,6 @@ public class DataInitializer implements CommandLineRunner {
                 .name("Croissant")
                 .description("Buttery French pastry")
                 .price(new BigDecimal("2.80"))
-                .stock(40)
                 .category(desserts)
                 .build());
 
@@ -110,7 +104,6 @@ public class DataInitializer implements CommandLineRunner {
                 .name("Sandwich")
                 .description("Club sandwich with ham and cheese")
                 .price(new BigDecimal("5.50"))
-                .stock(30)
                 .category(snacks)
                 .build());
 
@@ -159,12 +152,5 @@ public class DataInitializer implements CommandLineRunner {
                 .client(client1)
                 .product(latte)
                 .build());
-
-        espresso.setStock(espresso.getStock() - 1);
-        cappuccino.setStock(cappuccino.getStock() - 1);
-        latte.setStock(latte.getStock() - 1);
-        productRepository.save(espresso);
-        productRepository.save(cappuccino);
-        productRepository.save(latte);
     }
 }

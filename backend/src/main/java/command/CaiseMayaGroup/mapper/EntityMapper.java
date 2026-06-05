@@ -23,8 +23,6 @@ public final class EntityMapper {
                 .name(product.getName())
                 .description(product.getDescription())
                 .price(product.getPrice())
-                .stock(product.getStock())
-                .imageUrl(product.getImageUrl())
                 .categoryId(product.getCategory().getId())
                 .categoryName(product.getCategory().getName())
                 .build();

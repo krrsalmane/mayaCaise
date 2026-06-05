@@ -32,10 +32,10 @@ export default function Dashboard() {
   if (error) return <Layout title="Dashboard"><div className="alert alert-danger">{error}</div></Layout>;
 
   const cards = [
-    { label: 'Products', value: stats.totalProducts, color: '#6f4e37' },
-    { label: 'Clients', value: stats.totalClients, color: '#2d6a4f' },
-    { label: 'Total Sales', value: `${Number(stats.totalSalesAmount).toFixed(2)} MAD`, color: '#bc6c25' },
-    { label: 'Purchases', value: stats.totalPurchases, color: '#457b9d' },
+    { label: 'Products', value: stats.totalProducts, color: 'var(--color-primary)', icon: '☕' },
+    { label: 'Clients', value: stats.totalClients, color: 'var(--color-success)', icon: '👥' },
+    { label: 'Total Sales', value: `${Number(stats.totalSalesAmount).toFixed(2)} MAD`, color: 'var(--color-accent)', icon: '💰' },
+    { label: 'Purchases', value: stats.totalPurchases, color: 'var(--color-info)', icon: '🛒' },
   ];
 
   const salesByDay = [...(stats.salesByDay || [])].reverse();
@@ -46,8 +46,11 @@ export default function Dashboard() {
         {cards.map((card) => (
           <Col key={card.label} xs={12} sm={6} xl={3}>
             <Card className="stat-card h-100">
-              <Card.Body>
-                <p className="stat-label">{card.label}</p>
+              <Card.Body className="d-flex flex-column justify-content-between">
+                <div className="d-flex justify-content-between align-items-start mb-3">
+                  <p className="stat-label mb-0">{card.label}</p>
+                  <span style={{ fontSize: '2rem', opacity: 0.8 }}>{card.icon}</span>
+                </div>
                 <h3 className="stat-value" style={{ color: card.color }}>{card.value}</h3>
               </Card.Body>
             </Card>
@@ -65,11 +68,11 @@ export default function Dashboard() {
               ) : (
                 <ResponsiveContainer width="100%" height={280}>
                   <LineChart data={salesByDay}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e9ecef" />
+                    <XAxis dataKey="date" stroke="#7f8c8d" />
+                    <YAxis stroke="#7f8c8d" />
                     <Tooltip />
-                    <Line type="monotone" dataKey="totalAmount" stroke="#6f4e37" strokeWidth={2} />
+                    <Line type="monotone" dataKey="totalAmount" stroke="var(--color-primary)" strokeWidth={3} dot={{ fill: 'var(--color-primary)', strokeWidth: 2, r: 4 }} />
                   </LineChart>
                 </ResponsiveContainer>
               )}
@@ -85,11 +88,11 @@ export default function Dashboard() {
               ) : (
                 <ResponsiveContainer width="100%" height={280}>
                   <BarChart data={stats.mostSoldProducts}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="productName" />
-                    <YAxis />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e9ecef" />
+                    <XAxis dataKey="productName" stroke="#7f8c8d" />
+                    <YAxis stroke="#7f8c8d" />
                     <Tooltip />
-                    <Bar dataKey="totalQuantitySold" fill="#2d6a4f" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="totalQuantitySold" fill="var(--color-success)" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               )}

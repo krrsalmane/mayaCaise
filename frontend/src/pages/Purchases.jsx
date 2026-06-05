@@ -108,10 +108,8 @@ export default function Purchases() {
     <Layout title="Sales / Purchases">
       <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
         <Button 
-          variant="success" 
-          size="lg" 
+          className="record-sell-button"
           onClick={openModal}
-          style={{ padding: '20px 40px', fontSize: '1.5rem' }}
         >
           Record a Sell
         </Button>
@@ -122,23 +120,33 @@ export default function Purchases() {
           <Modal.Title>New Sale - Step {currentStep}/5</Modal.Title>
         </Modal.Header>
         <Modal.Body>
+          <div className="step-indicator">
+            {[1, 2, 3, 4, 5].map((step) => (
+              <div
+                key={step}
+                className={`step-dot ${step === currentStep ? 'active' : ''} ${step < currentStep ? 'completed' : ''}`}
+              />
+            ))}
+          </div>
+          <div className="text-center mb-4">
+            <span className="step-label">Step {currentStep} of 5</span>
+          </div>
+
           {success && <Alert variant="success">{success}</Alert>}
           {error && <Alert variant="danger">{error}</Alert>}
 
           {currentStep === 1 && (
             <Form.Group>
-              <Form.Label>Client Type</Form.Label>
+              <Form.Label className="mb-3 fw-semibold">Client Type</Form.Label>
               <div className="d-flex gap-3">
                 <Button
-                  variant={form.clientType === 'STAFF' ? 'primary' : 'outline-primary'}
-                  className="flex-fill py-3"
+                  className={`flex-fill py-3 option-button ${form.clientType === 'STAFF' ? 'selected' : ''}`}
                   onClick={() => handleSelect({ clientType: 'STAFF', clientId: '' })}
                 >
                   Staff
                 </Button>
                 <Button
-                  variant={form.clientType === 'EXTERNE' ? 'primary' : 'outline-primary'}
-                  className="flex-fill py-3"
+                  className={`flex-fill py-3 option-button ${form.clientType === 'EXTERNE' ? 'selected' : ''}`}
                   onClick={() => handleSelect({ clientType: 'EXTERNE', clientId: '' })}
                 >
                   Externe
@@ -150,8 +158,8 @@ export default function Purchases() {
 
           {currentStep === 2 && (
             <Form.Group>
-              <div className="d-flex justify-content-between align-items-center mb-2">
-                <Form.Label>Client Name</Form.Label>
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <Form.Label className="fw-semibold mb-0">Client Name</Form.Label>
                 <Button
                   size="sm"
                   variant="outline-primary"
@@ -165,8 +173,7 @@ export default function Purchases() {
                 {form.clientType === 'STAFF' && staffClients(clients).map((c) => (
                   <Button
                     key={c.id}
-                    variant={form.clientId === String(c.id) ? 'primary' : 'outline-secondary'}
-                    className="text-start py-2"
+                    className={`text-start py-2 option-button ${form.clientId === String(c.id) ? 'selected' : ''}`}
                     onClick={() => handleSelect({ clientId: String(c.id) })}
                   >
                     {c.fullName}
@@ -175,8 +182,7 @@ export default function Purchases() {
                 {form.clientType === 'EXTERNE' && externeClients(clients).map((c) => (
                   <Button
                     key={c.id}
-                    variant={form.clientId === String(c.id) ? 'primary' : 'outline-secondary'}
-                    className="text-start py-2"
+                    className={`text-start py-2 option-button ${form.clientId === String(c.id) ? 'selected' : ''}`}
                     onClick={() => handleSelect({ clientId: String(c.id) })}
                   >
                     {c.fullName}
@@ -189,13 +195,12 @@ export default function Purchases() {
 
           {currentStep === 3 && (
             <Form.Group>
-              <Form.Label>Category</Form.Label>
+              <Form.Label className="mb-3 fw-semibold">Category</Form.Label>
               <div className="d-flex flex-column gap-2" style={{ maxHeight: '300px', overflowY: 'auto' }}>
                 {categories.map((cat) => (
                   <Button
                     key={cat.id}
-                    variant={form.categoryId === String(cat.id) ? 'primary' : 'outline-secondary'}
-                    className="text-start py-2"
+                    className={`text-start py-2 option-button ${form.categoryId === String(cat.id) ? 'selected' : ''}`}
                     onClick={() => handleSelect({ categoryId: String(cat.id), productId: '' })}
                   >
                     {cat.name}
@@ -208,18 +213,15 @@ export default function Purchases() {
 
           {currentStep === 4 && (
             <Form.Group>
-              <Form.Label>Product</Form.Label>
+              <Form.Label className="mb-3 fw-semibold">Product</Form.Label>
               <div className="d-flex flex-column gap-2" style={{ maxHeight: '300px', overflowY: 'auto' }}>
                 {categoryProducts.map((p) => (
                   <Button
                     key={p.id}
-                    variant={form.productId === String(p.id) ? 'primary' : 'outline-secondary'}
-                    className="text-start py-2"
-                    disabled={p.stock < 1}
+                    className={`text-start py-2 option-button ${form.productId === String(p.id) ? 'selected' : ''}`}
                     onClick={() => handleSelect({ productId: String(p.id) })}
                   >
                     {p.name} — {Number(p.price).toFixed(2)} MAD
-                    {p.stock < 1 ? ' (out of stock)' : ` (stock: ${p.stock})`}
                   </Button>
                 ))}
               </div>
@@ -229,13 +231,13 @@ export default function Purchases() {
 
           {currentStep === 5 && (
             <>
-              <Form.Group className="mb-3">
-                <Form.Label>Discount</Form.Label>
+              <Form.Group className="mb-4">
+                <Form.Label className="mb-3 fw-semibold">Discount</Form.Label>
                 <div className="d-flex flex-wrap gap-2">
                   {DISCOUNT_OPTIONS.map((d) => (
                     <Button
                       key={d}
-                      variant={form.discountPercent === d ? 'primary' : 'outline-secondary'}
+                      className={`option-button ${form.discountPercent === d ? 'selected' : ''}`}
                       onClick={() => setForm({ ...form, discountPercent: d })}
                     >
                       {d === 0 ? 'No discount (0%)' : `${d}%`}
@@ -249,9 +251,9 @@ export default function Purchases() {
                 )}
               </Form.Group>
 
-              <div className="total-box mb-3 p-3 bg-light rounded">
-                <span className="d-block mb-1">Total Price</span>
-                <strong style={{ fontSize: '1.5rem' }}>{computedTotal} MAD</strong>
+              <div className="total-box mb-3 p-4 bg-light rounded">
+                <span className="d-block mb-2 fw-semibold text-muted">Total Price</span>
+                <strong style={{ fontSize: '2rem', color: 'var(--color-primary)' }}>{computedTotal} MAD</strong>
               </div>
             </>
           )}
@@ -262,9 +264,10 @@ export default function Purchases() {
           </Button>
           {currentStep === 5 && (
             <Button 
-              variant="success" 
+              variant="success"
+              className="record-sell-button"
               onClick={handleSubmit}
-              disabled={!selectedProduct || selectedProduct.stock < 1}
+              disabled={!selectedProduct}
             >
               Record Sale
             </Button>

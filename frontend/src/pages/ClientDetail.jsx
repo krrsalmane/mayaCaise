@@ -4,7 +4,7 @@ import { Alert, Button, Card, Col, Row, Table } from 'react-bootstrap';
 import Layout from '../components/Layout';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { clientApi, purchaseApi } from '../api/services';
-import { downloadTicketPdf } from '../utils/ticketPdf';
+import { downloadTicketPdf, downloadSinglePurchaseTicket } from '../utils/ticketPdf';
 
 export default function ClientDetail() {
   const { id } = useParams();
@@ -60,7 +60,7 @@ export default function ClientDetail() {
   const handleDownloadTicket = () => {
     if (!client || purchases.length === 0) return;
     downloadTicketPdf({
-      title: 'Releve client',
+      title: 'Sales Receipt',
       client,
       purchases,
       filename: `ticket_${client.fullName.replace(/\s+/g, '_')}.pdf`,
@@ -167,6 +167,7 @@ export default function ClientDetail() {
                 <th>Discount</th>
                 <th>Total (MAD)</th>
                 <th>Payment</th>
+                <th className="text-end">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -197,11 +198,20 @@ export default function ClientDetail() {
                       </Button>
                     </div>
                   </td>
+                  <td className="text-end">
+                    <Button
+                      size="sm"
+                      variant="outline-primary"
+                      onClick={() => downloadSinglePurchaseTicket(p, client)}
+                    >
+                      Download
+                    </Button>
+                  </td>
                 </tr>
               ))}
               {purchases.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="text-center text-muted py-4">
+                  <td colSpan={7} className="text-center text-muted py-4">
                     No purchases for this client yet
                   </td>
                 </tr>
@@ -212,7 +222,7 @@ export default function ClientDetail() {
                 <tr className="purchase-total-row">
                   <td colSpan={4} className="text-end fw-bold">Total</td>
                   <td className="fw-bold">{totals.all.toFixed(2)} MAD</td>
-                  <td />
+                  <td colSpan={2} />
                 </tr>
               </tfoot>
             )}

@@ -7,7 +7,6 @@ import command.CaiseMayaGroup.entity.Client;
 import command.CaiseMayaGroup.entity.Product;
 import command.CaiseMayaGroup.entity.Purchase;
 import command.CaiseMayaGroup.exception.BusinessException;
-import command.CaiseMayaGroup.exception.InsufficientStockException;
 import command.CaiseMayaGroup.exception.ResourceNotFoundException;
 import command.CaiseMayaGroup.mapper.EntityMapper;
 import command.CaiseMayaGroup.repository.PurchaseRepository;
@@ -38,11 +37,6 @@ public class PurchaseService {
         Client client = clientService.findEntityById(dto.getClientId());
         Product product = productService.findEntityById(dto.getProductId());
 
-        if (product.getStock() < 1) {
-            throw new InsufficientStockException(
-                    "Insufficient stock for product '" + product.getName() + "'. Available: " + product.getStock());
-        }
-
         BigDecimal unitPrice = product.getPrice();
         BigDecimal totalPrice = calculateTotal(unitPrice, dto.getDiscountPercent());
 
@@ -55,8 +49,6 @@ public class PurchaseService {
                 .client(client)
                 .product(product)
                 .build();
-
-        product.setStock(product.getStock() - 1);
 
         return EntityMapper.toPurchaseResponse(purchaseRepository.save(purchase));
     }

@@ -20,11 +20,6 @@ public class GlobalExceptionHandler {
         return buildError(HttpStatus.NOT_FOUND, ex.getMessage(), null);
     }
 
-    @ExceptionHandler(InsufficientStockException.class)
-    public ResponseEntity<ErrorResponseDTO> handleInsufficientStock(InsufficientStockException ex) {
-        return buildError(HttpStatus.BAD_REQUEST, ex.getMessage(), null);
-    }
-
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponseDTO> handleBusinessException(BusinessException ex) {
         return buildError(HttpStatus.BAD_REQUEST, ex.getMessage(), null);

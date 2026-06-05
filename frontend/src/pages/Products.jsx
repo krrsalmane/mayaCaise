@@ -9,7 +9,6 @@ const emptyForm = {
   name: '',
   description: '',
   price: '',
-  stock: '',
   imageUrl: '',
   categoryId: '',
 };
@@ -61,7 +60,6 @@ export default function Products() {
       name: product.name,
       description: product.description || '',
       price: product.price,
-      stock: product.stock,
       imageUrl: product.imageUrl || '',
       categoryId: product.categoryId,
     });
@@ -84,7 +82,6 @@ export default function Products() {
     const payload = {
       ...form,
       price: Number(form.price),
-      stock: 0, // default stock
       categoryId: Number(form.categoryId),
     };
     try {

@@ -27,8 +27,6 @@ public class ProductService {
                 .name(dto.getName())
                 .description(dto.getDescription())
                 .price(dto.getPrice())
-                .stock(dto.getStock())
-                .imageUrl(dto.getImageUrl())
                 .category(category)
                 .build();
         return EntityMapper.toProductResponse(productRepository.save(product));
@@ -40,8 +38,6 @@ public class ProductService {
         product.setName(dto.getName());
         product.setDescription(dto.getDescription());
         product.setPrice(dto.getPrice());
-        product.setStock(dto.getStock());
-        product.setImageUrl(dto.getImageUrl());
         product.setCategory(category);
         return EntityMapper.toProductResponse(productRepository.save(product));
     }

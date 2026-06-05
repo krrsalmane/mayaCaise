@@ -1,30 +1,7 @@
 import { jsPDF } from 'jspdf';
 
-const SHOP_NAME = 'CaisseMaya';
-const SHOP_SUB = 'Café & Snacks';
-
-function formatMoney(value) {
-  return `${Number(value).toFixed(2)} MAD`;
-}
-
-function formatDate(dateStr) {
-  return new Date(dateStr).toLocaleString('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
-function drawLine(doc, y, width = 72) {
-  doc.setLineWidth(0.2);
-  doc.line(14, y, 14 + width, y);
-  return y + 4;
-}
-
 /**
- * Coffee-shop style receipt ticket (PDF).
+ * Professional receipt ticket (PDF) for all purchases summary.
  * @param {Object} options
  * @param {string} options.title
  * @param {Object} [options.client]
@@ -32,110 +9,218 @@ function drawLine(doc, y, width = 72) {
  * @param {string} [options.filename]
  */
 export function downloadTicketPdf({ title = 'Ticket', client, purchases, filename }) {
-  const doc = new jsPDF({ unit: 'mm', format: [80, 297] });
-  const centerX = 40;
-  let y = 12;
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 20;
+  let y = margin;
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
-  doc.text(SHOP_NAME, centerX, y, { align: 'center' });
-  y += 5;
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  doc.text(SHOP_SUB, centerX, y, { align: 'center' });
-  y += 6;
-  y = drawLine(doc, y);
+  // Header
+  doc.setFontSize(24);
+  doc.setTextColor(139, 90, 43);
+  doc.text('Café Maya', pageWidth / 2, y, { align: 'center' });
+  y += 15;
 
-  doc.setFontSize(8);
-  doc.text(title, centerX, y, { align: 'center' });
-  y += 5;
-  doc.text(formatDate(new Date()), centerX, y, { align: 'center' });
-  y += 6;
+  doc.setFontSize(12);
+  doc.setTextColor(100);
+  doc.text(title, pageWidth / 2, y, { align: 'center' });
+  y += 20;
 
+  // Line
+  doc.setDrawColor(200);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 15;
+
+  // Client info
   if (client) {
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Client: ${client.fullName}`, 14, y);
-    y += 4;
-    doc.setFont('helvetica', 'normal');
-    const typeLabel = client.clientType === 'STAFF' ? 'Staff' : 'Externe';
-    doc.text(`Type: ${typeLabel}`, 14, y);
-    y += 4;
+    doc.setFontSize(10);
+    doc.setTextColor(60);
+    doc.text('Client:', margin, y);
+    y += 8;
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.text(client.fullName, margin, y);
+    y += 12;
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Type: ${client.clientType}`, margin, y);
+    y += 8;
     if (client.phoneNumber) {
-      doc.text(`Tel: ${client.phoneNumber}`, 14, y);
-      y += 4;
+      doc.text(`Phone: ${client.phoneNumber}`, margin, y);
+      y += 8;
     }
-    y = drawLine(doc, y);
+    if (client.email) {
+      doc.text(`Email: ${client.email}`, margin, y);
+      y += 8;
+    }
+    // Line
+    doc.setDrawColor(200);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 15;
   }
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7);
-  doc.text('Article', 14, y);
-  doc.text('Prix', 48, y);
-  doc.text('Total', 62, y);
-  y += 4;
-  doc.setFont('helvetica', 'normal');
-  y = drawLine(doc, y, 68);
+  // Table header
+  doc.setFontSize(10);
+  doc.setFont(undefined, 'bold');
+  doc.setTextColor(60);
+  doc.text('Date', margin, y);
+  doc.text('Product', margin + 50, y);
+  doc.text('Price', margin + 110, y);
+  doc.text('Discount', margin + 140, y);
+  doc.text('Total', margin + 170, y);
+  y += 10;
 
+  // Line
+  doc.setDrawColor(200);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 10;
+
+  // Purchases table
+  doc.setFont(undefined, 'normal');
   let grandTotal = 0;
-
   purchases.forEach((p) => {
     const lineTotal = Number(p.totalPrice);
     grandTotal += lineTotal;
-    const paidLabel = p.paid ? 'PAYE' : 'NON PAYE';
 
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    const productLines = doc.splitTextToSize(p.productName, 32);
-    doc.text(productLines, 14, y);
-    const nameHeight = productLines.length * 3.5;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    doc.text(formatMoney(p.unitPrice), 48, y);
-    doc.text(formatMoney(lineTotal), 62, y);
-    y += Math.max(nameHeight, 4);
+    doc.setFontSize(9);
+    doc.setTextColor(60);
+    doc.text(new Date(p.purchaseDate).toLocaleString(), margin, y);
+    doc.text(p.productName, margin + 50, y);
+    doc.text(Number(p.unitPrice).toFixed(2), margin + 110, y);
+    doc.text(p.discountPercent > 0 ? `-${p.discountPercent}%` : '—', margin + 140, y);
+    doc.text(Number(p.totalPrice).toFixed(2), margin + 170, y);
+    y += 8;
 
-    if (p.discountPercent > 0) {
-      doc.text(`Remise: -${p.discountPercent}%`, 14, y);
-      y += 3.5;
-    }
-    doc.setFont('helvetica', 'bold');
-    if (p.paid) {
-      doc.setTextColor(34, 139, 34);
-    } else {
-      doc.setTextColor(180, 90, 0);
-    }
-    doc.text(`[ ${paidLabel} ]`, 14, y);
-    doc.setTextColor(0, 0, 0);
-    doc.setFont('helvetica', 'normal');
-    y += 4;
-    y = drawLine(doc, y, 68);
+    // Payment status
+    doc.setTextColor(p.paid ? 39 : 231, p.paid ? 174 : 76, 96);
+    doc.text(p.paid ? 'PAID' : 'UNPAID', margin + 50, y);
+    doc.setTextColor(60);
+    y += 10;
   });
 
-  y += 2;
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  doc.text('TOTAL', 14, y);
-  doc.text(formatMoney(grandTotal), 62, y);
-  y += 8;
+  // Line
+  doc.setDrawColor(200);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 15;
 
-  doc.setFont('helvetica', 'normal');
+  // Grand total
+  doc.setFontSize(16);
+  doc.setFont(undefined, 'bold');
+  doc.setTextColor(139, 90, 43);
+  doc.text(`Total: ${grandTotal.toFixed(2)} MAD`, margin, y);
+  y += 20;
+
+  // Footer
+  doc.setDrawColor(200);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 15;
   doc.setFontSize(8);
-  doc.text('Merci de votre visite !', centerX, y, { align: 'center' });
-  y += 4;
-  doc.text('A bientot au café', centerX, y, { align: 'center' });
+  doc.setTextColor(150);
+  doc.setFont(undefined, 'normal');
+  doc.text('Thank you for your purchase!', pageWidth / 2, y, { align: 'center' });
+  y += 5;
+  doc.text('Café Maya - Quality Coffee & Service', pageWidth / 2, y, { align: 'center' });
 
   const safeName = (client?.fullName || 'ticket').replace(/\s+/g, '_');
   doc.save(filename || `ticket_${safeName}_${Date.now()}.pdf`);
 }
 
 export function downloadSinglePurchaseTicket(purchase, client) {
-  downloadTicketPdf({
-    title: 'Ticket de caisse',
-    client: client || {
-      fullName: purchase.clientName,
-      clientType: purchase.clientType,
-    },
-    purchases: [purchase],
-    filename: `ticket_${purchase.id}.pdf`,
-  });
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 20;
+  let y = margin;
+
+  // Header
+  doc.setFontSize(24);
+  doc.setTextColor(139, 90, 43);
+  doc.text('Café Maya', pageWidth / 2, y, { align: 'center' });
+  y += 15;
+
+  doc.setFontSize(12);
+  doc.setTextColor(100);
+  doc.text('Sales Receipt', pageWidth / 2, y, { align: 'center' });
+  y += 20;
+
+  // Line
+  doc.setDrawColor(200);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 15;
+
+  // Order details
+  doc.setFontSize(10);
+  doc.setTextColor(60);
+  doc.text(`Order ID: #${purchase.id}`, margin, y);
+  y += 8;
+  doc.text(`Date: ${new Date(purchase.purchaseDate).toLocaleString()}`, margin, y);
+  y += 15;
+
+  // Line
+  doc.setDrawColor(200);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 15;
+
+  // Product info
+  doc.setFontSize(12);
+  doc.setTextColor(0);
+  doc.text('Product:', margin, y);
+  y += 8;
+  doc.setFontSize(14);
+  doc.setFont(undefined, 'bold');
+  doc.text(purchase.productName, margin, y);
+  y += 12;
+
+  doc.setFontSize(10);
+  doc.setFont(undefined, 'normal');
+  doc.text(`Unit Price: ${Number(purchase.unitPrice).toFixed(2)} MAD`, margin, y);
+  y += 8;
+  if (purchase.discountPercent > 0) {
+    doc.text(`Discount: ${purchase.discountPercent}%`, margin, y);
+    y += 8;
+  }
+
+  // Total
+  y += 5;
+  doc.setDrawColor(200);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 10;
+  doc.setFontSize(16);
+  doc.setFont(undefined, 'bold');
+  doc.setTextColor(139, 90, 43);
+  doc.text(`Total: ${Number(purchase.totalPrice).toFixed(2)} MAD`, margin, y);
+  y += 15;
+
+  // Client info
+  doc.setDrawColor(200);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 10;
+  doc.setFontSize(10);
+  doc.setFont(undefined, 'normal');
+  doc.setTextColor(100);
+  doc.text('Client:', margin, y);
+  y += 8;
+  doc.text(client?.fullName || purchase.clientName, margin, y);
+  y += 8;
+  doc.text(`Type: ${client?.clientType || purchase.clientType}`, margin, y);
+  y += 15;
+
+  // Payment status
+  doc.setDrawColor(200);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 10;
+  doc.setFontSize(10);
+  doc.setTextColor(purchase.paid ? 39 : 231, purchase.paid ? 174 : 76, 96);
+  doc.text(`Payment Status: ${purchase.paid ? 'PAID' : 'UNPAID'}`, margin, y);
+  y += 20;
+
+  // Footer
+  doc.setDrawColor(200);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 15;
+  doc.setFontSize(8);
+  doc.setTextColor(150);
+  doc.text('Thank you for your purchase!', pageWidth / 2, y, { align: 'center' });
+  y += 5;
+  doc.text('Café Maya - Quality Coffee & Service', pageWidth / 2, y, { align: 'center' });
+
+  doc.save(`ticket-${purchase.id}.pdf`);
 }
